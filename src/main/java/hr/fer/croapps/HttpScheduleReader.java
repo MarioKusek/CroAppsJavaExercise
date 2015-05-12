@@ -1,5 +1,8 @@
 package hr.fer.croapps;
 
+import org.htmlcleaner.CleanerProperties;
+import org.htmlcleaner.HtmlCleaner;
+import org.htmlcleaner.TagNode;
 import org.xml.sax.InputSource;
 
 import javax.xml.parsers.SAXParser;
@@ -28,8 +31,32 @@ public class HttpScheduleReader {
         //System.out.println(content);
 
         String html = extractHtml(content);
-        System.out.println(html);
+        //System.out.println(html);
+
+        cleanHtmlAndParseEntries(html);
     }
+
+    private void cleanHtmlAndParseEntries(String html) {
+        HtmlCleaner pageParser = new HtmlCleaner();
+        CleanerProperties props = pageParser.getProperties();
+        props.setAllowHtmlInsideAttributes(true);
+        props.setAllowMultiWordAttributes(true);
+        props.setRecognizeUnicodeChars(true);
+        props.setOmitComments(true);
+
+        try {
+            TagNode node = pageParser.clean(new StringReader(html));
+            List<TagNode> list = (List<TagNode>) node.getElementListByName(
+                    "table", true);
+            TagNode tableNode = list.get(1);
+            HtmlTagVisitor visitor = new HtmlTagVisitor();
+            tableNode.traverse(visitor);
+            this.list = visitor.getListofEntries();
+        } catch (Exception e) {
+            throw new RuntimeException("Can not clean HTML!", e);
+        }
+    }
+
 
     private String extractHtml(String content) {
         try {
