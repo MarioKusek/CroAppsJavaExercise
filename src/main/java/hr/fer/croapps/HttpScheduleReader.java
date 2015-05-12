@@ -1,7 +1,12 @@
 package hr.fer.croapps;
 
+import org.xml.sax.InputSource;
+
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.net.URLConnection;
@@ -20,7 +25,28 @@ public class HttpScheduleReader {
     // fetch data from net and populate list
     public void fetchSchedule() {
         String content = downloadContent();
-        System.out.println(content);
+        //System.out.println(content);
+
+        String html = extractHtml(content);
+        System.out.println(html);
+    }
+
+    private String extractHtml(String content) {
+        try {
+            SAXParserFactory factory = SAXParserFactory.newInstance();
+            SAXParser saxParser = factory.newSAXParser();
+
+            InputSource source = new InputSource();
+            source.setCharacterStream(new StringReader(content));
+
+            RssHandler handler = new RssHandler();
+
+            saxParser.parse(source, handler);
+
+            return handler.getString();
+        } catch (Exception e) {
+            throw new RuntimeException("Can not parse RSS!", e);
+        }
     }
 
     private String downloadContent() {
